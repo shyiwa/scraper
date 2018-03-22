@@ -6,6 +6,7 @@ import urllib as ul
 import requests
 import os
 import re
+import itertools
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -14,57 +15,47 @@ from selenium.webdriver.chrome.options import Options
 
 def download(url):
     res = requests.get(url)
-    bs_content_page = BeautifulSoup(res.text, 'lxml')
-    a = bs_content_page.body
-print(a)    
-    a = a.children
-    for child in a:
-        print(child)
-    name = bs_content_page.find('h1').contents[0]
+    bs_content_page = BeautifulSoup(res.content, 'lxml')
+#    a = bs_content_page.body
+#    print(a)    
+#    a = a.children
+#    for child in a:
+#        print(child)  
+    name = bs_content_page.find_all('a',href=url)[0]['title']
     name = name.strip()    # 去除首尾空格
-    table = bs_content_page.find_all('div','subsrbelist center')
-    table = table.find_all('a',target = '_blank')
-    nChapters = table.__len__()
+    table = bs_content_page.find_all('div','subsrbelist center',recursive=True).contents
+    table = bs_content_page.select('div > ul > li > a')
+    nChapters = len(table)
     
     print('共', str(nChapters), '章')
         
-    for j in range(nChapters):
-        chap_url = 'http://www.manhuagui.com' + table[j]['href']
-        chap_name = table[j]['title'].strip()
+#    for j in range(nChapters):
+    for chap in table:
+        chap_url = chap['href']
+        chap_name = chap['title'].strip()
         
         path = './' + name + '/' + chap_name
         os.makedirs(path)  
         
         res = requests.get(chap_url)
         bs = BeautifulSoup(res.text,'lxml')
-        nPages = bs.find_all(text = re.compile(r'/\d+\)'))[0]
-        nPages = int(re.sub('\D','', str(nPages)))
 
-        print('下载倒数第', j+1, '章, ', nPages, '张图片')
-        for i in range(nPages):
-            path = './' + name + '/' + chap_name + '/' + str(i+1) + '.jpg'
-            page_url = 'http://www.manhuagui.com/comic/416/216853.html#p='+str(i+1)
+        print('下载', chap_name)
+#        flag = 0
+        for i in itertools.count(1):
+            page_url = chap_url + '#p=%d' % i
+            path = './' + name + '/' + chap_name + '/' + str(i) + '.jpg'
+            browser.get(page_url)
             browser.get(page_url)
             res = browser.page_source
             bs = BeautifulSoup(res,'lxml')
-            
-            res = requests.get(page_url)
-            bs = BeautifulSoup(res.text,'lxml')
-            img_url = bs.find_all('div','clearfix')[1]
-   
-            ul.request.urlretrieve(img_url,path)
-            
-            #browser = webdriver.PhantomJS(executable_path='C:/Users/WWW/Anaconda3/pkgs/phantomjs-2.1.1-0/Library/bin/PhantomJS')
-            browser.get(page_url)
-            data = browser.page_source
-            bs = BeautifulSoup(data,'lxml')
-            img_url = bs.find_all('img','mangaFile')[0]['src']
-            browser.get(img_url)
-            ul.request.urlretrieve(img_url,path,schedule)
-                   
-            img = requests.get(img_url,headers=headers).content            
-            with open(path, 'wb') as f:
-                f.write(img)
+            img_url = bs.find_all('img', id='curPic')[0]['src']
+            try:
+                ul.request.urlretrieve(img_url,path)    
+            except Exception as e:
+                flag = 1
+                break
+        
                 
 #显示下载进度
 def schedule(a,b,c):
