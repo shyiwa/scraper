@@ -40,7 +40,7 @@ def download(url, num_retries):
                 return download(url, num_retries-1)
     return html
 
-download(url,2)
+download(url, 2)
 
 url = 'http://www.meetup.com/'
 html = urllib.request.urlopen(url).read()
