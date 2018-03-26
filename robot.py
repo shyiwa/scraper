@@ -8,10 +8,10 @@ rp.read()
 url = "http://example.webscraping.com"
 
 user_agent = "BadCrawler"  # 代理
-print(rp.can_fetch(user_agent,url))
+print(rp.can_fetch(user_agent, url))
 
 user_agent = "GoodCrawler"
-print(rp.can_fetch(user_agent,url))
+print(rp.can_fetch(user_agent, url))
 
 
 # 使用builtwith模块查看网站使用的技术
