@@ -5,66 +5,48 @@
 import urllib as ul
 import requests
 import os
-import re
+import itertools
+from datetime import datetime as dt
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-#from datetime import datetime as dt
-
 def download(url):
-    res = requests.get(url)
-    bs_content_page = BeautifulSoup(res.text, 'lxml')
-    a = bs_content_page.body
-print(a)    
-    a = a.children
-    for child in a:
-        print(child)
-    name = bs_content_page.find('h1').contents[0]
+    res = requests.get(url)			
+    bs_content_page = BeautifulSoup(res.content, 'lxml')
+    name = bs_content_page.find_all('a',href=url)[0]['title']	# 漫画名
     name = name.strip()    # 去除首尾空格
-    table = bs_content_page.find_all('div','subsrbelist center')
-    table = table.find_all('a',target = '_blank')
-    nChapters = table.__len__()
+    table = bs_content_page.select('div > ul > li > a')			# 章节列表
+    nChapters = len(table)
     
     print('共', str(nChapters), '章')
+    start = dt.now()
         
-    for j in range(nChapters):
-        chap_url = 'http://www.manhuagui.com' + table[j]['href']
-        chap_name = table[j]['title'].strip()
+#    for j in range(nChapters):
+    for chap in table:
+        chap_url = chap['href']				# 章节的链接网址
+        chap_name = chap['title'].strip()	# 章节名
+        print('下载', chap_name)
         
-        path = './' + name + '/' + chap_name
-        os.makedirs(path)  
-        
-        res = requests.get(chap_url)
-        bs = BeautifulSoup(res.text,'lxml')
-        nPages = bs.find_all(text = re.compile(r'/\d+\)'))[0]
-        nPages = int(re.sub('\D','', str(nPages)))
+        path = os.path.join(os.path.curdir, name, chap_name)		
+        if not os.path.exists(path):
+            os.makedirs(path) 				# 创建章节的文件夹
 
-        print('下载倒数第', j+1, '章, ', nPages, '张图片')
-        for i in range(nPages):
-            path = './' + name + '/' + chap_name + '/' + str(i+1) + '.jpg'
-            page_url = 'http://www.manhuagui.com/comic/416/216853.html#p='+str(i+1)
+        for i in itertools.count(1):
+            page_url = chap_url + '#p=%d' % i		# 章节的页面网址
+            path = os.path.join(os.path.curdir, name, chap_name, str(i)+'.jpg')
             browser.get(page_url)
+            browser.get(page_url)			# 要重复载入网址一次才能刷新页面
             res = browser.page_source
             bs = BeautifulSoup(res,'lxml')
-            
-            res = requests.get(page_url)
-            bs = BeautifulSoup(res.text,'lxml')
-            img_url = bs.find_all('div','clearfix')[1]
-   
-            ul.request.urlretrieve(img_url,path)
-            
-            #browser = webdriver.PhantomJS(executable_path='C:/Users/WWW/Anaconda3/pkgs/phantomjs-2.1.1-0/Library/bin/PhantomJS')
-            browser.get(page_url)
-            data = browser.page_source
-            bs = BeautifulSoup(data,'lxml')
-            img_url = bs.find_all('img','mangaFile')[0]['src']
-            browser.get(img_url)
-            ul.request.urlretrieve(img_url,path,schedule)
-                   
-            img = requests.get(img_url,headers=headers).content            
-            with open(path, 'wb') as f:
-                f.write(img)
+            img_url = bs.find_all('img', id='curPic')[0]['src']	# 图片网址
+            try:
+                ul.request.urlretrieve(img_url,path)    
+            except Exception as e:
+                break	# 下载图片时出错说明当前章节的图片已经全部下载过
+        
+            end = dt.now()
+            print((end-start).total_seconds(), '秒')
                 
 #显示下载进度
 def schedule(a,b,c):
@@ -76,29 +58,28 @@ def schedule(a,b,c):
 
 
 if __name__ == '__main__':
+    # for i in range(92):
+    # path = './2/'+str(i+1)+'.jpg'
+    # url = 'http://183.91.33.78/p0.xiaoshidi.net/2013/01/29035807'+str(i)+'.jpg'
+    # ul.request.urlretrieve(url,path)
     
-#    for i in range(92):
-#        path = './2/'+str(i+1)+'.jpg'
-#        url = 'http://183.91.33.78/p0.xiaoshidi.net/2013/01/29035807'+str(i)+'.jpg'
-#        ul.request.urlretrieve(url,path)
-    
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.binary_location = 'C:/Users/wys/AppData/Local/Google/Chrome/Application/chrome.exe'
+    # chrome_options = Options()
+    # chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--disable-gpu')
+    # chrome_options.binary_location = 'C:/Users/wys/AppData/Local/Google/Chrome/Application/chrome.exe'
 
-    browser = webdriver.Chrome(chrome_options = chrome_options)
-    browser.get(url)
+    # browser = webdriver.Chrome(chrome_options = chrome_options)
+    browser = webdriver.PhantomJS(executable_path='C:/Users/WWW/Anaconda3/pkgs/phantomjs-2.1.1-0/Library/bin/PhantomJS')
     
-    headers={
-    'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER' 
-    }   
-#    page=  ul.request.Request(url, headers=headers)
-#    page_info = ul.request.urlopen(page).read().decode('utf-8')
-#    #print(page_info)
-    
+	# headers={
+	# 'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER' 
+	# }   
+	# page=  ul.request.Request(url, headers=headers)
+	# page_info = ul.request.urlopen(page).read().decode('utf-8')
+	# print(page_info)
+
     url = 'http://www.dmzx.com/manhua/64/'
     download(url)
 
-    url1 = 'http://lib.bjut.edu.cn/statics/images/dt_img.jpg'
-    ul.request.urlretrieve(url1,path,schedule)
+    # url1 = 'http://lib.bjut.edu.cn/statics/images/dt_img.jpg'
+    # ul.request.urlretrieve(url1,path,schedule)
