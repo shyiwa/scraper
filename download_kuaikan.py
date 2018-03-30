@@ -6,7 +6,7 @@ import urllib as ul
 import requests
 import os
 from bs4 import BeautifulSoup
-#from datetime import datetime as dt
+from datetime import datetime as dt
 
 def download(url):
     res = requests.get(url)
@@ -17,9 +17,10 @@ def download(url):
     nChapters = table.__len__()
     
     print('共', str(nChapters), '章')
+    start = dt.now()
         
-    for j in range(nChapters):
-    for j in range(18,nChapters):
+#    for j in range(nChapters):
+    for j in range(513,nChapters):
         chap_url = 'http://www.kuaikanmanhua.com/' + table[j].find('a')['href']
         chap_name = table[j].find('a')['title'].strip()
         
@@ -40,7 +41,9 @@ def download(url):
 #            img = requests.get(img_url).content            
 #            with open(path, 'wb') as f:
 #                f.write(img)
-
+            
+        end = dt.now()
+        print((end-start).total_seconds(), '秒')
 
 if __name__ == '__main__':
     
@@ -54,8 +57,10 @@ if __name__ == '__main__':
 #    }   
 #    page=  ul.request.Request(url, headers=headers)
 #    page_info = ul.request.urlopen(page).read().decode('utf-8')
-#    #print(page_info)
+    #print(page_info)
     
-    url = 'http://www.kuaikanmanhua.com/web/topic/1004/'
+    #url = 'http://www.kuaikanmanhua.com/web/topic/1004/'
+    url = 'http://www.kuaikanmanhua.com/web/topic/1339/'
     download(url)
 
+    # 202 383 487 491 508 513
