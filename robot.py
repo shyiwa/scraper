@@ -8,10 +8,10 @@ rp.read()
 url = "http://example.webscraping.com"
 
 user_agent = "BadCrawler"  # 代理
-print(rp.can_fetch(user_agent,url))
+print(rp.can_fetch(user_agent, url))
 
 user_agent = "GoodCrawler"
-print(rp.can_fetch(user_agent,url))
+print(rp.can_fetch(user_agent, url))
 
 
 # 使用builtwith模块查看网站使用的技术
@@ -40,7 +40,7 @@ def download(url, num_retries):
                 return download(url, num_retries-1)
     return html
 
-download(url,2)
+download(url, 2)
 
 url = 'http://www.meetup.com/'
 html = urllib.request.urlopen(url).read()
