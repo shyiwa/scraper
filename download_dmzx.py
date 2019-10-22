@@ -16,7 +16,7 @@ def download(url):
     bs_content_page = BeautifulSoup(res.content, 'lxml')
     name = bs_content_page.find_all('a',href=url)[0]['title']	# 漫画名
     name = name.strip()    # 去除首尾空格
-    table = bs_content_page.select('div > ul > li > a')			# 章节列表
+    table = bs_content_page.select('div > ul > li > a')		# 章节列表
     nChapters = len(table)
     
     print('共', str(nChapters), '章')
